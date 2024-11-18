@@ -17,8 +17,8 @@ http {
     # doing things like this will load balancing with round-robin
     upstream backend_server {
         server fastapi-app1:3000;
-    server fastapi-app2:4000;
-    server fastapi-app3:5000;
+	    server fastapi-app2:4000;
+	    server fastapi-app3:5000;
     }
 
     server {
