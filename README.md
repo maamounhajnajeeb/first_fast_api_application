@@ -1,4 +1,9 @@
-This readme is inspired by this [tutorial](https://www.youtube.com/watch?v=9t9Mp0BGnyI)
+This readme is inspired by this [tutorial](https://www.youtube.com/watch?v=9t9Mp0BGnyI)</br>
+Just run the command
+```bash
+docker-compose up --build
+```
+and load-balancing is on.
 
 nginx.conf settings used in nginx container:
 ```nginx
