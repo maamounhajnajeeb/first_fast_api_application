@@ -1,82 +1,69 @@
-This readme is inspired by this [tutorial](https://www.youtube.com/watch?v=9t9Mp0BGnyI)</br></br></br>
+```py
+from fastapi import FastAPI
 
-Just run the command
-```bash
-docker-compose up --build
+app = FastAPI()
+
+@app.get("/")
+async def root():
+    return {"message": "hello, world!"}
+
+
+@app.get("/items/{item_id}")
+async def read_item(item_id):
+    return {"item_id": item_id}
+
+
+# with types
+@app.get("/typed_items/{item_id}")
+async def read_typed_item(item_id: int):
+    return {"item_id": item_id}
 ```
-and load-balancing is on.</br></br></br>
 
-nginx.conf settings used in nginx container:
-```nginx
-http {
+# the order of these two functions are important
+# hint: try switching functions places and call urls before and after, see the result
+```py
+@app.get("/users/me")
+async def read_user_me():
+    return {"user_id": "the current user id"}
+
+@app.get("/users/{user_id}")
+async def read_user_me(user_id: int):
+    return {"user_id": user_id}
+```
+
+# Enum for fixed (predefined) values
+```python
+from enum import Enum
+
+class ModelName(str, Enum):
+    alexnet = "alexnet"
+    resnet = "resnet"
+    lenet = "lenet"
+
+@app.get("/models/{model_name}")
+async def get_model(model_name: ModelName):
+    # note: model_name must be one of those: ['alexnet', 'resnet', 'lenet']
     
-    # will include all types, like (text/css, text/html .....)
-    include mime.types;
+    # Comparing between enumeration members
+    if model_name is ModelName.alexnet:
+        # You can return enum members from your path operation directly
+        # They will be converted to their corresponding values (strings in this case) before returning them to the client
+        return {"model_name": model_name, "message": "Deep Learning FTW!"}
 
-    # we have to specify our backend servers
-    # doing things like this will load balancing with round-robin
-    upstream backend_server {
-        server fastapi-app1:3000;
-	    server fastapi-app2:4000;
-	    server fastapi-app3:5000;
-    }
+    # get the enumeration value with .value
+    if model_name.value == "lenet":
+        return {"model_name": model_name, "message": "LeCNN all the images"}
 
-    server {
-        listen 80;
-        root /var/www/html;
-
-        # it will automatically search for index.html in the root directory
-        # index index.html;
-
-        # whenever we hit /, it will route us to upstream servers via round-robin algorithm
-        location / {
-            proxy_pass http://backend_server/;
-        }
-
-        # when never we go to /number/()
-        # it will show the content from /count location block
-        # but in the url it's /number
-        rewrite ^/number/(\w+) /count/$1;
-
-        location ~* /count/[0-9] {
-            root /var/www/html;
-            
-            try_files /index.html =404;
-        }
-
-        location /fruits {
-            # this root will be /var/www/html/fruits
-            # because NGINX add the location to the root
-            root /var/www/html;
-            
-            # NGINX will automatically search for index.html
-        }
-
-        location /carbs {
-            # using alias will use fixed path
-            # and append the location to the end of it
-            alias /var/www/html/fruits;
-
-            # NGINX will automatically search for index.html
-        }
-
-        location /vegetables {
-            root /var/www/html;
-            
-            # first look at vegetables/veggies.html
-            # then look at: index.html at root: /var/www/html/index.html
-            # if no one exists, through 404 not found error
-            # <start with> <backup page> <no one exists=404>
-            try_files /vegetables/veggies.html /index.html =404;
-        }
-
-        location /corps {
-            # it will redirect user to /frutis location
-            # and we will never see /corps in the url
-            return 307 /fruits;
-        }
-    }
-}
-
-events {}
+    return {"model_name": model_name, "message": "Have some residuals"}
 ```
+
+# Path convertor
+# In this case, the name of the parameter is file_path, and the last part, :path
+# tells it that the parameter should match any path.
+```python
+@app.get("/files/{file_path:path}")
+async def read_file(file_path: str):
+    return {"file_path": file_path}
+```
+
+# Query Parameters
